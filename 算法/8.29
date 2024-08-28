@@ -1,0 +1,21 @@
+func exchange(b byte)bool{
+    return (b>='a'&&b<='z')||(b>='A'&&b<='Z')||(b>='0'&&b<='9')//确定是字母和数字，去掉空格等
+}
+func isPalindrome(s string) bool {
+    s=strings.ToLower(s)
+    for l,r:=0,len(s)-1;l<r;l++{
+        for l<r&&!exchange(s[l]){
+            l++
+        }
+        for l<r&&!exchange(s[r]){
+            r--
+        }
+        if s[r]!=s[l]{
+            return false
+        }
+        r--
+    }
+    return true
+
+
+}
