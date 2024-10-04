@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 func main() {
 	var c chan bool
@@ -57,10 +60,55 @@ func main() {
 		fmt.Println("v==", v)
 	}
 	fmt.Println("main over")
+	/*
+		普通的通道没有缓冲区，或者称为缓冲区为0，有缓冲区的通道就是缓冲通道
+		普通的通道是一次发送， 在接受前都是阻塞的；一次接收，在发送前都是阻塞的
+		而缓冲通道有一个缓冲区，在缓冲区满了之后才会阻塞
+		非缓冲：ch:=make(chan type)
+		缓冲：ch:=make(chan type,capcity)
+	*/
+	chan2 := make(chan int) //非缓冲,len= 0 cap= 0
+	fmt.Println("len=", len(chan2), "cap=", cap(chan2))
+	//chan2 <- 100                                        //阻塞式，需要有goroutine读，否则死锁
+	chan3 := make(chan int, 5)                          //非阻塞式
+	fmt.Println("len=", len(chan3), "cap=", cap(chan3)) //len= 0 cap= 5
+	chan3 <- 100
+	fmt.Println("len=", len(chan3), "cap=", cap(chan3)) //len= 1 cap= 5
+	chan3 <- 200
+	chan3 <- 300
+	chan3 <- 400
+	chan3 <- 500
+	fmt.Println("len=", len(chan3), "cap=", cap(chan3)) //len= 5 cap= 5,此时已经满了，进入阻塞
+	//chan3 <- 600                                        //死锁啦
+	close(chan3) //满了就关闭
+	for v3 := range chan3 {
+		fmt.Println("chan3==", v3) //像一个队列，先进先出
+	}
+	fmt.Println("--------------------我是一条分界线----------------")
+	//写一个缓存channel
+	chan4 := make(chan string, 5)
+	go sendData4(chan4)
+	for {
+		v4, ok := <-chan4
+		if !ok {
+			fmt.Println("读完了,ok==", ok)
+			break
+		}
+		fmt.Println("读取的数据是", v4)
+	}
+	fmt.Println("main over")
+
 }
 func sendData(c chan int) {
 	for i := 0; i < 10; i++ {
 		c <- i
+	}
+	close(c)
+}
+func sendData4(c chan string) {
+	for i := 0; i < 10; i++ {
+		c <- "数据" + strconv.Itoa(i)
+		fmt.Println("这是第", i, "个数据")
 	}
 	close(c)
 }
