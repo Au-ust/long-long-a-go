@@ -44,16 +44,19 @@ func main() {
 	*/
 	var chan1 chan int
 	chan1 = make(chan int)
-	go sendData(chan1)
-	//while循环一直判定chan1里到底有没有对象可读
-	for {
-		v, ok := <-chan1
-		if !ok {
-			fmt.Println("读完了,ok==", ok)
-			break
+	/*
+		go sendData(chan1)
+		//while循环一直判定chan1里到底有没有对象可读
+		for {
+			v, ok := <-chan1
+			if !ok {
+				fmt.Println("读完了,ok==", ok)
+				break
+			}
+			fmt.Println("chan1读取的数据是=", v, "ok==", ok)
 		}
-		fmt.Println("chan1读取的数据是=", v, "ok==", ok)
-	}
+
+	*/
 	//我们也可以通过range来访问通道，这样就不需要ok值了
 	go sendData(chan1)
 	for v := range chan1 {
@@ -87,7 +90,9 @@ func main() {
 	fmt.Println("--------------------我是一条分界线----------------")
 	//写一个缓存channel
 	chan4 := make(chan string, 5)
-	go sendData4(chan4)
+	done4 := make(chan bool)
+	go sendData4(chan4, done4)
+	<-done4
 	for {
 		v4, ok := <-chan4
 		if !ok {
@@ -97,18 +102,19 @@ func main() {
 		fmt.Println("读取的数据是", v4)
 	}
 	fmt.Println("main over")
-
 }
 func sendData(c chan int) {
 	for i := 0; i < 10; i++ {
 		c <- i
+		fmt.Println("输入成功")
 	}
 	close(c)
 }
-func sendData4(c chan string) {
+func sendData4(c chan string, done chan bool) {
 	for i := 0; i < 10; i++ {
 		c <- "数据" + strconv.Itoa(i)
 		fmt.Println("这是第", i, "个数据")
 	}
-	close(c)
+	close(c)     // 关闭通道
+	done <- true // 通知主线程任务完成
 }
